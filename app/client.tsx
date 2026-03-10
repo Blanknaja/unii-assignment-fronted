@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Table,
@@ -16,6 +16,8 @@ import {
   DatePicker,
   ConfigProvider,
   Space,
+  Grid,
+  message,
 } from "antd";
 import { SearchOutlined, ClearOutlined } from "@ant-design/icons";
 import { ReportService } from "@/service/report";
@@ -25,6 +27,7 @@ import { cleanReportPayload } from "@/lib/helper";
 import dayjs from "dayjs";
 import { ProductCategory } from "./constants/product";
 
+const { useBreakpoint } = Grid;
 const { RangePicker } = DatePicker;
 
 export default function InventoryReportPage() {
@@ -48,6 +51,9 @@ export default function InventoryReportPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [fadeSplash, setFadeSplash] = useState(false);
 
+  const [messageApi, contextHolder] = message.useMessage();
+  const screens = useBreakpoint();
+
   useEffect(() => {
     fetchCategories();
     fetchReport();
@@ -69,7 +75,28 @@ export default function InventoryReportPage() {
     setExpandedRowKeys([]);
     try {
       const isEvent = customFilters && customFilters.nativeEvent;
-      const payloadToUse = customFilters && !isEvent ? customFilters : filters;
+      const payloadToUse =
+        customFilters && !isEvent ? { ...customFilters } : { ...filters };
+
+      if (payloadToUse.minPrice !== "" && payloadToUse.maxPrice !== "") {
+        if (Number(payloadToUse.minPrice) > Number(payloadToUse.maxPrice)) {
+          messageApi.warning("Min price must be less than max price");
+          setFilters((prev) => ({ ...prev, minPrice: "", maxPrice: "" }));
+          return;
+        }
+      }
+
+      if (payloadToUse.minPrice !== "") {
+        payloadToUse.minPrice = Number(payloadToUse.minPrice);
+      } else {
+        delete payloadToUse.minPrice;
+      }
+
+      if (payloadToUse.maxPrice !== "") {
+        payloadToUse.maxPrice = Number(payloadToUse.maxPrice);
+      } else {
+        delete payloadToUse.maxPrice;
+      }
 
       const cleanPayloaded = cleanReportPayload(payloadToUse);
 
@@ -99,12 +126,12 @@ export default function InventoryReportPage() {
       title: "หมวดหมู่",
       dataIndex: "categoryName",
       fixed: "left" as const,
-      width: 120,
+      width: 100,
     },
     {
       title: "สินค้าย่อย",
       dataIndex: "subCategoryName",
-      fixed: "left" as const,
+      fixed: screens.sm ? ("left" as const) : undefined,
       width: 150,
     },
     {
@@ -226,22 +253,22 @@ export default function InventoryReportPage() {
             <strong>เกรด: </strong>
             {record.buy.grades.A > 0 && (
               <Tag className="!ml-1" color="green">
-                A ({record.buy.grades.A?.toLocaleString()})
+                A ({record.buy.grades.A?.toLocaleString()}) kg
               </Tag>
             )}
             {record.buy.grades.B > 0 && (
               <Tag className="!ml-1" color="blue">
-                B ({record.buy.grades.B?.toLocaleString()})
+                B ({record.buy.grades.B?.toLocaleString()}) kg
               </Tag>
             )}
             {record.buy.grades.C > 0 && (
               <Tag className="!ml-1" color="orange">
-                C ({record.buy.grades.C?.toLocaleString()})
+                C ({record.buy.grades.C?.toLocaleString()}) kg
               </Tag>
             )}
             {record.buy.grades.D > 0 && (
               <Tag className="!ml-1" color="red">
-                D ({record.buy.grades.D?.toLocaleString()})
+                D ({record.buy.grades.D?.toLocaleString()}) kg
               </Tag>
             )}
             {Object.values(record.buy.grades).every((v) => v === 0) && (
@@ -289,22 +316,22 @@ export default function InventoryReportPage() {
             <strong>เกรด: </strong>
             {record.sell.grades.A > 0 && (
               <Tag className="!ml-1" color="green">
-                A ({record.sell.grades.A?.toLocaleString()})
+                A ({record.sell.grades.A?.toLocaleString()}) kg
               </Tag>
             )}
             {record.sell.grades.B > 0 && (
               <Tag className="!ml-1" color="blue">
-                B ({record.sell.grades.B?.toLocaleString()})
+                B ({record.sell.grades.B?.toLocaleString()}) kg
               </Tag>
             )}
             {record.sell.grades.C > 0 && (
               <Tag className="!ml-1" color="orange">
-                C ({record.sell.grades.C?.toLocaleString()})
+                C ({record.sell.grades.C?.toLocaleString()}) kg
               </Tag>
             )}
             {record.sell.grades.D > 0 && (
               <Tag className="!ml-1" color="red">
-                D ({record.sell.grades.D?.toLocaleString()})
+                D ({record.sell.grades.D?.toLocaleString()}) kg
               </Tag>
             )}
             {Object.values(record.sell.grades).every((v) => v === 0) && (
@@ -360,9 +387,11 @@ export default function InventoryReportPage() {
         },
       }}
     >
+      {/* Add context to fix Static function can not consume context like dynamic theme. Please use 'App' component instead */}
+      {contextHolder}
       {showSplash && (
         <div
-          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#4534f0] text-white transition-opacity duration-500 ${
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-brand-primary text-white transition-opacity duration-500 ${
             fadeSplash ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
@@ -375,7 +404,7 @@ export default function InventoryReportPage() {
             className="w-40 h-auto mb-6 animate-pulse drop-shadow-2xl"
           />
 
-          <div className="w-12 h-12 border-4 border-white/20 border-t-[#b42996] rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-white/20 border-t-brand-secondary rounded-full animate-spin"></div>
 
           <p className="mt-4 text-sm font-light text-white/70 tracking-widest">
             loading...
@@ -442,6 +471,65 @@ export default function InventoryReportPage() {
             </Col>
 
             <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">
+                ช่วงราคาออเดอร์ (บาท)
+              </label>
+              <div className="flex items-center gap-2 h-[32px]">
+                <Input
+                  min={0}
+                  type="number"
+                  placeholder="เริ่มต้น"
+                  value={filters.minPrice}
+                  onChange={(e) =>
+                    handleFilterChange("minPrice", e.target.value)
+                  }
+                  onBlur={() => {
+                    if (filters.minPrice !== "" && filters.maxPrice !== "") {
+                      if (Number(filters.minPrice) > Number(filters.maxPrice)) {
+                        messageApi.warning(
+                          "minprice must be less than maxprice",
+                        );
+                        handleFilterChange("minPrice", "");
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <span className="text-gray-400 font-bold">-</span>
+                <Input
+                  min={0}
+                  type="number"
+                  placeholder="สิ้นสุด"
+                  value={filters.maxPrice}
+                  onChange={(e) =>
+                    handleFilterChange("maxPrice", e.target.value)
+                  }
+                  onBlur={() => {
+                    if (filters.minPrice !== "" && filters.maxPrice !== "") {
+                      if (Number(filters.maxPrice) < Number(filters.minPrice)) {
+                        messageApi.warning(
+                          "maxprice must be greater than minprice",
+                        );
+                        handleFilterChange("maxPrice", "");
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="flex-1"
+                />
+              </div>
+            </Col>
+
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
               <label className="block mb-1 text-gray-600">เลขออเดอร์</label>
               <Space.Compact className="w-full">
                 <Select
@@ -478,7 +566,7 @@ export default function InventoryReportPage() {
               <label className="hidden md:block mb-1 opacity-0 pointer-events-none">
                 Action
               </label>
-              <div className="flex justify-end items-center gap-2 mt-2 md:mt-0">
+              <div className="flex items-center gap-2 mt-2 md:mt-0">
                 <Button
                   className="flex-1 md:flex-none"
                   icon={<ClearOutlined />}
