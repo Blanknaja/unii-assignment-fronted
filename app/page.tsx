@@ -1,3 +1,10 @@
+import Client from "./client";
+
 export default function Home() {
-  return <div>Home</div>;
+  return (
+    <div>
+      Home
+      <Client />
+    </div>
+  );
 }
