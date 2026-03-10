@@ -13,6 +13,8 @@ import {
   Tag,
   Tooltip,
   DatePicker,
+  ConfigProvider,
+  Space,
 } from "antd";
 import { SearchOutlined, ClearOutlined } from "@ant-design/icons";
 import { ReportService } from "@/service/report";
@@ -56,7 +58,6 @@ export default function InventoryReportPage() {
       const payloadToUse = customFilters && !isEvent ? customFilters : filters;
 
       const cleanPayloaded = cleanReportPayload(payloadToUse);
-      console.log("cleanPayloaded :", cleanPayloaded);
 
       const result = await ReportService.getReport(cleanPayloaded);
 
@@ -162,8 +163,8 @@ export default function InventoryReportPage() {
   const handleDateRangeChange = (dates: any, dateStrings: [string, string]) => {
     setFilters((prev) => ({
       ...prev,
-      startDate: dateStrings[0] || "",
-      endDate: dateStrings[1] || "",
+      startDate: dateStrings?.[0] || "",
+      endDate: dateStrings?.[1] || "",
     }));
   };
 
@@ -200,7 +201,8 @@ export default function InventoryReportPage() {
   const expandedRowRender = (record: any) => {
     return (
       <div className="flex gap-4 p-4 bg-gray-50 border-y border-gray-200">
-        <div className="flex-1 p-4 bg-white border border-green-200 rounded-lg shadow-sm">
+        {/* Buy Zone */}
+        <div className="box-buy">
           <h4 className="font-bold text-green-700 mb-2">Buy</h4>
           <p className="mb-1">
             <strong>ช่วงราคา:</strong> {record.buy.minPrice} -{" "}
@@ -209,22 +211,24 @@ export default function InventoryReportPage() {
           <div className="mb-2">
             <strong>เกรด: </strong>
             {record.buy.grades.A > 0 && (
-              <Tag color="green">
+              <Tag className="!ml-1" color="green">
                 A ({record.buy.grades.A?.toLocaleString()})
               </Tag>
             )}
             {record.buy.grades.B > 0 && (
-              <Tag color="blue">
+              <Tag className="!ml-1" color="blue">
                 B ({record.buy.grades.B?.toLocaleString()})
               </Tag>
             )}
             {record.buy.grades.C > 0 && (
-              <Tag color="orange">
+              <Tag className="!ml-1" color="orange">
                 C ({record.buy.grades.C?.toLocaleString()})
               </Tag>
             )}
             {record.buy.grades.D > 0 && (
-              <Tag color="red">D ({record.buy.grades.D?.toLocaleString()})</Tag>
+              <Tag className="!ml-1" color="red">
+                D ({record.buy.grades.D?.toLocaleString()})
+              </Tag>
             )}
             {Object.values(record.buy.grades).every((v) => v === 0) && (
               <span>-</span>
@@ -244,9 +248,11 @@ export default function InventoryReportPage() {
                       title={`วันที่ทำรายการ: ${o.date}`}
                       placement="top"
                     >
-                      <span className="inline-block bg-gray-100 border border-gray-200 rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                      <span className="badge-order">
                         {o.orderId}{" "}
-                        <strong className="text-blue-600">({o.price})</strong>
+                        <strong className="text-brand-primary text-[8px]">
+                          ({o.price}฿)
+                        </strong>
                       </span>
                     </Tooltip>
                   );
@@ -259,7 +265,7 @@ export default function InventoryReportPage() {
         </div>
 
         {/* Sell Zone */}
-        <div className="flex-1 p-4 bg-white border border-orange-200 rounded-lg shadow-sm">
+        <div className="box-sell">
           <h4 className="font-bold text-orange-700 mb-2">Sell</h4>
           <p className="mb-1">
             <strong>ช่วงราคา:</strong> {record.sell.minPrice} -{" "}
@@ -268,16 +274,24 @@ export default function InventoryReportPage() {
           <div className="mb-2">
             <strong>เกรด: </strong>
             {record.sell.grades.A > 0 && (
-              <Tag color="green">A ({record.sell.grades.A})</Tag>
+              <Tag className="!ml-1" color="green">
+                A ({record.sell.grades.A?.toLocaleString()})
+              </Tag>
             )}
             {record.sell.grades.B > 0 && (
-              <Tag color="blue">B ({record.sell.grades.B})</Tag>
+              <Tag className="!ml-1" color="blue">
+                B ({record.sell.grades.B?.toLocaleString()})
+              </Tag>
             )}
             {record.sell.grades.C > 0 && (
-              <Tag color="orange">C ({record.sell.grades.C})</Tag>
+              <Tag className="!ml-1" color="orange">
+                C ({record.sell.grades.C?.toLocaleString()})
+              </Tag>
             )}
             {record.sell.grades.D > 0 && (
-              <Tag color="red">D ({record.sell.grades.D})</Tag>
+              <Tag className="!ml-1" color="red">
+                D ({record.sell.grades.D?.toLocaleString()})
+              </Tag>
             )}
             {Object.values(record.sell.grades).every((v) => v === 0) && (
               <span>-</span>
@@ -296,9 +310,11 @@ export default function InventoryReportPage() {
                       title={`วันที่ทำรายการ: ${o.date}`}
                       placement="top"
                     >
-                      <span className="inline-block bg-gray-100 border border-gray-200 rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                      <span className="badge-order">
                         {o.orderId}{" "}
-                        <strong className="text-blue-600">({o.grade})</strong>
+                        <strong className="text-brand-primary text-[8px]">
+                          ({o.price}฿)
+                        </strong>
                       </span>
                     </Tooltip>
                   );
@@ -314,132 +330,164 @@ export default function InventoryReportPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <Card className="mb-6 shadow-sm">
-        <h2 className="flex justify-center items-center gap-2 text-lg font-bold mb-4 ">
-          <SearchOutlined /> ระบบสรุปยอดซื้อ–ขาย รายสินค้า
-        </h2>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#4534f0",
+          borderRadius: 6,
+        },
+        components: {
+          Table: {
+            headerBg: "#4534f0",
+            headerColor: "#ffffff",
+            headerBorderRadius: 6,
+            rowHoverBg: "rgba(180, 41, 150, 0.02)",
+          },
+        },
+      }}
+    >
+      <div className="p-6 bg-gray-100 min-h-screen">
+        <Card className="mb-6 shadow-sm">
+          <h2 className="title-brand">
+            <SearchOutlined className="text-brand-primary" />
+            ระบบสรุปยอดซื้อ–ขาย
+          </h2>
 
-        <Row gutter={[16, 16]}>
-          <Col span={8}>
-            <label className="block mb-1 text-gray-600">ช่วงวันที่</label>
-            <RangePicker
-              className="w-full"
-              value={[
-                filters.startDate ? dayjs(filters.startDate) : null,
-                filters.endDate ? dayjs(filters.endDate) : null,
-              ]}
-              onChange={handleDateRangeChange}
-              format="YYYY-MM-DD"
-              placeholder={["วันที่เริ่มต้น", "วันที่สิ้นสุด"]}
-            />
-          </Col>
-          <Col span={8}>
-            <label className="block mb-1 text-gray-600">หมวดหมู่หลัก</label>
-            <Select
-              className="w-full"
-              placeholder="เลือกหมวดหมู่หลัก"
-              allowClear
-              value={filters.categoryId || undefined}
-              onChange={handleCategoryChange}
-              options={categoryOptions}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-            />
-          </Col>
-          <Col span={8}>
-            <label className="block mb-1 text-gray-600">สินค้าย่อย</label>
-            <Select
-              className="w-full"
-              placeholder="เลือกหมวดหมู่ย่อย"
-              allowClear
-              value={filters.subCategoryId || undefined}
-              onChange={(v) => handleFilterChange("subCategoryId", v)}
-              options={subCategoryOptions}
-              disabled={!filters.categoryId}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-            />
-          </Col>
-
-          <Col span={8}>
-            <label className="block mb-1 text-gray-600">เลขออเดอร์</label>
-            <div className="flex">
-              <Select
-                className="w-32"
-                value={filters.orderIdMatchType}
-                onChange={(v) => handleFilterChange("orderIdMatchType", v)}
-                options={[
-                  { value: "CONTAINS", label: "มีคำว่า" },
-                  { value: "EXACT", label: "ตรงตัว" },
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">วันที่</label>
+              <RangePicker
+                className="w-full"
+                value={[
+                  filters.startDate ? dayjs(filters.startDate) : null,
+                  filters.endDate ? dayjs(filters.endDate) : null,
                 ]}
+                onChange={handleDateRangeChange}
+                format="YYYY-MM-DD"
+                placeholder={["วันที่เริ่มต้น", "วันที่สิ้นสุด"]}
               />
-              <Input
-                className="flex-1"
-                placeholder="พิมพ์เลขออเดอร์..."
-                value={filters.orderId}
-                onChange={(e) => handleFilterChange("orderId", e.target.value)}
+            </Col>
+
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">หมวดหมู่หลัก</label>
+              <Select
+                className="w-full"
+                placeholder="เลือกหมวดหมู่หลัก"
+                allowClear
+                value={filters.categoryId || undefined}
+                onChange={handleCategoryChange}
+                options={categoryOptions}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
               />
-            </div>
-          </Col>
+            </Col>
 
-          <Col span={8}>
-            <label className="block mb-1 text-gray-600">เกรดสินค้า</label>
-            <Checkbox.Group
-              options={["A", "B", "C", "D"]}
-              value={filters.grades}
-              onChange={(v) => handleFilterChange("grades", v)}
-            />
-          </Col>
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">สินค้าย่อย</label>
+              <Select
+                className="w-full"
+                placeholder="เลือกหมวดหมู่ย่อย"
+                allowClear
+                value={filters.subCategoryId || undefined}
+                onChange={(v) => handleFilterChange("subCategoryId", v)}
+                options={subCategoryOptions}
+                disabled={!filters.categoryId}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+              />
+            </Col>
 
-          <Col span={8} className="flex justify-center items-center">
-            <Button icon={<ClearOutlined />} onClick={handleClear}>
-              ล้างค่า (Clear)
-            </Button>
-            <Button
-              className="ml-2"
-              type="primary"
-              icon={<SearchOutlined />}
-              onClick={fetchReport}
-              loading={loading}
-            >
-              ค้นหา (Search)
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">เลขออเดอร์</label>
+              <Space.Compact className="w-full">
+                <Select
+                  className="w-24 sm:w-32"
+                  value={filters.orderIdMatchType}
+                  onChange={(v) => handleFilterChange("orderIdMatchType", v)}
+                  options={[
+                    { value: "CONTAINS", label: "contains" },
+                    { value: "EXACT", label: "exact" },
+                  ]}
+                />
+                <Input
+                  placeholder="uniixxx..."
+                  value={filters.orderId}
+                  onChange={(e) =>
+                    handleFilterChange("orderId", e.target.value)
+                  }
+                />
+              </Space.Compact>
+            </Col>
 
-      <Card className="shadow-sm overflow-hidden">
-        <Table
-          columns={columns}
-          dataSource={tableData}
-          loading={loading}
-          rowKey={(record) => `${record.categoryId}_${record.subCategoryId}`}
-          expandable={{
-            expandedRowRender,
-            expandedRowKeys: expandedRowKeys,
-            onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
-          }}
-          scroll={{ x: 1000 }}
-          bordered
-          pagination={{
-            current: currentPage,
-            pageSize: 10,
-            onChange: (page) => setCurrentPage(page),
-            showSizeChanger: false,
-            showTotal: (total, range) =>
-              `แสดง ${range[0]}-${range[1]} จากทั้งหมด ${total} รายการ`,
-          }}
-        />
-      </Card>
-    </div>
+            <Col xs={24} sm={12} md={8} className="flex flex-col">
+              <label className="block mb-1 text-gray-600">เกรดสินค้า</label>
+              <div className="h-[32px] flex items-center">
+                <Checkbox.Group
+                  options={["A", "B", "C", "D"]}
+                  value={filters.grades}
+                  onChange={(v) => handleFilterChange("grades", v)}
+                />
+              </div>
+            </Col>
+
+            <Col xs={24} sm={24} md={8} className="flex flex-col">
+              <label className="hidden md:block mb-1 opacity-0 pointer-events-none">
+                Action
+              </label>
+              <div className="flex justify-end items-center gap-2 mt-2 md:mt-0">
+                <Button
+                  className="flex-1 md:flex-none"
+                  icon={<ClearOutlined />}
+                  onClick={handleClear}
+                >
+                  ล้างค่า (Clear)
+                </Button>
+                <Button
+                  className="flex-1 md:flex-none"
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={fetchReport}
+                  loading={loading}
+                >
+                  ค้นหา (Search)
+                </Button>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+
+        <Card className="shadow-sm overflow-hidden p-0">
+          <Table
+            columns={columns}
+            dataSource={tableData}
+            loading={loading}
+            rowKey={(record) => `${record.categoryId}_${record.subCategoryId}`}
+            expandable={{
+              expandedRowRender,
+              expandedRowKeys: expandedRowKeys,
+              onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
+            }}
+            scroll={{ x: 1000 }}
+            bordered
+            pagination={{
+              current: currentPage,
+              pageSize: 10,
+              onChange: (page) => setCurrentPage(page),
+              showSizeChanger: false,
+              showTotal: (total, range) =>
+                `แสดง ${range[0]}-${range[1]} จากทั้งหมด ${total} รายการ`,
+            }}
+          />
+        </Card>
+      </div>
+    </ConfigProvider>
   );
 }
