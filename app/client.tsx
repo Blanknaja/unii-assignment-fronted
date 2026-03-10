@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Table,
   Input,
@@ -44,9 +45,22 @@ export default function InventoryReportPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [expandedRowKeys, setExpandedRowKeys] = useState<any>([]);
 
+  const [showSplash, setShowSplash] = useState(true);
+  const [fadeSplash, setFadeSplash] = useState(false);
+
   useEffect(() => {
     fetchCategories();
     fetchReport();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFadeSplash(true);
+      setTimeout(() => {
+        setShowSplash(false);
+      }, 500);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchReport = async (customFilters?: any) => {
@@ -346,9 +360,31 @@ export default function InventoryReportPage() {
         },
       }}
     >
+      {showSplash && (
+        <div
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#4534f0] text-white transition-opacity duration-500 ${
+            fadeSplash ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
+          <Image
+            priority
+            src="/image/logo_unii.png"
+            alt="UNII Logo"
+            width={160}
+            height={160}
+            className="w-40 h-auto mb-6 animate-pulse drop-shadow-2xl"
+          />
+
+          <div className="w-12 h-12 border-4 border-white/20 border-t-[#b42996] rounded-full animate-spin"></div>
+
+          <p className="mt-4 text-sm font-light text-white/70 tracking-widest">
+            loading...
+          </p>
+        </div>
+      )}
       <div className="p-6 bg-gray-100 min-h-screen">
         <Card className="mb-6 shadow-sm">
-          <h2 className="title-brand">
+          <h2 className="title-brand text-2xl font-bold">
             <SearchOutlined className="text-brand-primary" />
             ระบบสรุปยอดซื้อ–ขาย
           </h2>
